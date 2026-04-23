@@ -1,0 +1,127 @@
+version: '3.9'
+
+networks:
+  fairgig-network:
+    driver: bridge
+
+services:
+
+  # ── Frontend ──────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    container_name: fairgig-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - NEXT_PUBLIC_API_URL=http://localhost:8001
+    depends_on:
+      - auth-service
+      - earnings-service
+      - anomaly-service
+      - grievance-service
+      - analytics-service
+      - certificate-renderer
+    networks:
+      - fairgig-network
+    restart: unless-stopped
+
+  # ── Auth Service (8001) ───────────────────────────────────────────────────
+  auth-service:
+    build:
+      context: .
+      dockerfile: docker/auth_service/Dockerfile
+    container_name: fairgig-auth
+    ports:
+      - "8001:8001"
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL}
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    networks:
+      - fairgig-network
+    restart: unless-stopped
+
+  # ── Earnings Service (8002) ───────────────────────────────────────────────
+  earnings-service:
+    build:
+      context: .
+      dockerfile: docker/earnings_service/Dockerfile
+    container_name: fairgig-earnings
+    ports:
+      - "8002:8002"
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    networks:
+      - fairgig-network
+    restart: unless-stopped
+
+  # ── Anomaly Service (8003) ────────────────────────────────────────────────
+  anomaly-service:
+    build:
+      context: .
+      dockerfile: docker/anomaly_service/Dockerfile
+    container_name: fairgig-anomaly
+    ports:
+      - "8003:8003"
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    networks:
+      - fairgig-network
+    restart: unless-stopped
+
+  # ── Grievance Service (8004) ──────────────────────────────────────────────
+  grievance-service:
+    build:
+      context: .
+      dockerfile: docker/grievance_service/Dockerfile
+    container_name: fairgig-grievance
+    ports:
+      - "8004:8004"
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    networks:
+      - fairgig-network
+    restart: unless-stopped
+
+  # ── Analytics Service (8005) ──────────────────────────────────────────────
+  analytics-service:
+    build:
+      context: .
+      dockerfile: docker/analytics_service/Dockerfile
+    container_name: fairgig-analytics
+    ports:
+      - "8005:8005"
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    networks:
+      - fairgig-network
+    restart: unless-stopped
+
+  # ── Certificate Renderer (8006) ───────────────────────────────────────────
+  certificate-renderer:
+    build:
+      context: .
+      dockerfile: docker/certificate_renderer/Dockerfile
+    container_name: fairgig-certificate
+    ports:
+      - "8006:8006"
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    networks:
+      - fairgig-network
+    restart: unless-stopped
