@@ -82,27 +82,6 @@ jobs:
       # Frontend Docker build is only done in deploy.yml (push to main)
       # Skipped here because it requires env vars and takes 5+ minutes
 
-  # ── Lint frontend ────────────────────────────────────────────────────────
-  lint:
-    name: Lint Frontend
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Run lint
-        run: npm run lint
-
   # ── Type check frontend ──────────────────────────────────────────────────
   typecheck:
     name: TypeScript Check

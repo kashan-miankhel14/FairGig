@@ -7,7 +7,7 @@
     "dev:all": "node scripts/run_all.js",
     "build": "next build --no-lint",
     "start": "next start",
-    "lint": "next lint --dir app --dir components --dir lib"
+    "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
