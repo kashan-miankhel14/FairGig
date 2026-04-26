@@ -79,18 +79,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build frontend
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/frontend/Dockerfile
-          push: false
-          tags: fairgig/frontend:ci
-          build-args: |
-            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # Frontend Docker build is only done in deploy.yml (push to main)
+      # Skipped here because it requires env vars and takes 5+ minutes
 
   # ── Lint frontend ────────────────────────────────────────────────────────
   lint:
