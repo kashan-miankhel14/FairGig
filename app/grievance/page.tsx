@@ -132,9 +132,11 @@ export default function GrievanceBoard() {
     try {
       await fetch(`http://localhost:8004/grievances/${id}/like`, { method: 'POST' })
     } catch {
-      await supabase.rpc('increment_likes', { grievance_id: id }).catch(() =>
-        supabase.from('grievances').update({ likes_count: (grievances.find(g => g.id === id)?.likes_count || 0) + 1 }).eq('id', id)
-      )
+      try {
+        await supabase.rpc('increment_likes', { grievance_id: id })
+      } catch {
+        await supabase.from('grievances').update({ likes_count: (grievances.find(g => g.id === id)?.likes_count || 0) + 1 }).eq('id', id)
+      }
     }
     setGrievances(prev => prev.map(g => g.id === id ? { ...g, likes_count: g.likes_count + 1 } : g))
     setLiking(null)
