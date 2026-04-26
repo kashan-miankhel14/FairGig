@@ -13,6 +13,8 @@ jobs:
   deploy:
     name: Build, Push & Deploy
     runs-on: ubuntu-latest
+    # Skip if AWS secrets are not configured yet
+    if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.ECR_REGISTRY != '' }}
 
     steps:
       # ── 1. Checkout ──────────────────────────────────────────────────────
