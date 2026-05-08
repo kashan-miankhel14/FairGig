@@ -1,93 +1,203 @@
 # FairGig 🇵🇰 — Gig Worker Income & Rights Platform
 
-## SOFTEC 2026 — Web Dev Competition
-
-FairGig is a comprehensive platform designed to empower millions of Pakistani gig workers (Foodpanda riders, Careem drivers, Daraz delivery agents, etc.) by providing them with a unified system to log, verify, and protect their earnings.
-
-### 🌟 Key Features
-
-- **Kamaai Logger (Earnings Tracker)**: Workers can log shifts across multiple Pakistani platforms (Foodpanda, Careem, Bykea, Daraz). Supports bulk CSV import.
-- **Certified Income Statements**: Generate print-friendly, verifiable income certificates in PKR for use with banks or landlords.
-- **Shikayat Board (Grievance System)**: A community-driven board for workers to report deactivations, commission hikes, and systemic issues.
-- **Advocate Analytics**: High-level dashboard for labour advocates to spot patterns like sudden income drops or city-wide commission spikes.
-- **Anomaly Detection**: AI-powered service (FastAPI) that flags statistically unusual deductions or suspicious platform behavior.
-
-### 🛠️ Tech Stack & Architecture
-
-FairGig is built using a modern microservices architecture to ensure scalability and separation of concerns:
-
-- **Frontend**: Next.js (React) with Tailwind CSS for a premium, responsive experience.
-- **Auth Service (8001)**: Python FastAPI (JWT-based, role-based access).
-- **Earnings Service (8002)**: Python FastAPI (CRUD for shifts, CSV processing).
-- **Anomaly Service (8003)**: Python FastAPI (Statistical detection logic).
-- **Grievance Service (8004)**: Node.js Express (Complaint management & community board).
-- **Analytics Service (8005)**: Python FastAPI (Aggregate KPIs & trends).
-- **Certificate Renderer (8006)**: Node.js (Generates verifiable income statements).
-- **Database**: Supabase (PostgreSQL) with Row Level Security (RLS).
-
-### 🗄️ Database Justification
-We chose **PostgreSQL (via Supabase)** for its strong consistency, advanced relational capabilities, and built-in **Row Level Security (RLS)**. RLS is critical for FairGig as it allows us to strictly enforce that workers can only access their own sensitive data, while allowing Advocates to query anonymized, aggregated trends (via pre-computed views/tables) without ever exposing individual worker identities.
+> A production-grade microservices platform with a full DevOps pipeline — containerized with Docker, orchestrated on AWS EKS with Kubernetes, automated CI/CD via GitHub Actions, infrastructure provisioned with Terraform, server configuration managed by Ansible, and full observability with Prometheus & Grafana.
 
 ---
 
-### 📝 API Documentation (SOFTEC Requirement)
+## 🏗️ Architecture Overview
 
-All services are independently runnable and communicate via REST APIs.
-
-#### 1. Anomaly Service (`/analyze`)
-Exposes detection logic for statistical outliers in earnings.
-- **Endpoint**: `POST /analyze`
-- **Logic**: Uses Z-Score analysis to flag shifts >2σ from the worker's mean and tracks commission rate deviations >20%.
-
-#### 2. Auth Service
-- `POST /auth/login`: Authenticates user and returns JWT.
-- `GET /auth/verify`: Validates token for inter-service communication.
-
-#### 3. Earnings Service
-- `POST /shifts`: Logs new shift.
-- `POST /csv-import`: Handles bulk upload.
-
-#### 4. Grievance Service
-- `POST /grievances`: Submits worker complaint.
-- `GET /grievances`: Lists public board.
-
----
-
-### 🚀 Getting Started
-
-#### Prerequisites
-- Node.js & pnpm
-- Python 3.12+
-- Supabase project (already configured)
-
-#### Quick Setup
-
-```bash
-# Install all dependencies
-bash scripts/setup.sh
-
-# Start everything at once
-node scripts/run_all.js
+```
+Internet
+    │
+    ▼
+[AWS ALB Load Balancer]
+    │
+    ▼
+[AWS EKS — Kubernetes Cluster]
+    ├── Next.js Frontend          :3000
+    ├── Auth Service              :8001  (Python/FastAPI)
+    ├── Earnings Service          :8002  (Python/FastAPI)
+    ├── Anomaly Service           :8003  (Python/FastAPI)
+    ├── Grievance Service         :8004  (Node.js/Express)
+    ├── Analytics Service         :8005  (Python/FastAPI)
+    └── Certificate Renderer      :8006  (Node.js/Express)
+    │
+    ▼
+[Supabase PostgreSQL — Managed Database]
+    │
+    ▼
+[Prometheus + Grafana — Monitoring & Alerting]
 ```
 
-#### Running Individually
+---
 
-1. **Frontend** (Port 3000):
-   ```bash
-   pnpm dev
-   ```
+## 🚀 DevOps Pipeline
 
-2. **Backend Services** (each in a separate terminal):
-   ```bash
-   cd backend/services/auth_service && python main.py        # Port 8001
-   cd backend/services/earnings_service && python main.py    # Port 8002
-   cd backend/services/anomaly_service && python main.py     # Port 8003
-   cd backend/services/grievance_service && node server.js   # Port 8004
-   cd backend/services/analytics_service && python main.py   # Port 8005
-   cd backend/services/certificate_renderer && node index.js # Port 8006
-   ```
+### ✅ Milestone 1 — Docker Containerization
+- Dockerfiles for all 7 services (Python/FastAPI + Node.js/Express + Next.js multi-stage)
+- `docker-compose.yml` for full local development stack
+- Shared Docker network for inter-service communication
+- Health checks on all containers
+- `.dockerignore` to keep images lean and secrets out
 
-#### Demo Accounts (password: `password123`)
+```bash
+# Run entire stack locally
+docker-compose up
+```
+
+### ✅ Milestone 2 — GitHub Actions CI/CD
+- **CI pipeline** (`ci.yml`): Triggers on every push and PR — builds all Docker images, runs TypeScript checks
+- **Deploy pipeline** (`deploy.yml`): Triggers on push to `main` — builds images, pushes to AWS ECR, deploys to EKS with zero-downtime rolling updates
+- Docker layer caching for fast builds
+- Image tagging with commit SHA for full traceability and rollback capability
+
+```
+git push to main
+    → Build 7 Docker images
+    → Push to AWS ECR
+    → kubectl rolling update on EKS
+    → Wait for all pods healthy
+    → ✅ Live
+```
+
+### 🔄 Milestone 3 — Terraform (AWS Infrastructure as Code)
+- VPC with public/private subnets across 2 availability zones
+- EKS cluster with auto-scaling node groups (t3.medium)
+- ECR repositories for all 7 services
+- IAM roles and security groups
+- One command to provision entire AWS infrastructure
+
+```bash
+terraform init
+terraform plan
+terraform apply   # Provisions full AWS stack
+```
+
+### 🔄 Milestone 4 — Kubernetes Manifests + Helm Charts
+- K8s Deployments, Services, Ingress for all 7 services
+- Secrets management for DB credentials and API keys
+- Horizontal Pod Autoscaler (HPA) — scales pods based on CPU/memory
+- Helm charts for environment-specific deployments (dev/prod)
+
+```bash
+helm install fairgig ./helm/fairgig -f values-prod.yaml
+kubectl get pods -n fairgig
+```
+
+### 🔄 Milestone 5 — Ansible Automation
+- Playbooks for EC2 bastion host configuration
+- Automated tool installation (kubectl, helm, aws-cli)
+- Deployment automation playbooks
+- Secret rotation playbooks
+
+```bash
+ansible-playbook -i inventory/hosts.ini playbooks/setup-bastion.yml
+ansible-playbook -i inventory/hosts.ini playbooks/deploy-app.yml
+```
+
+### 🔄 Milestone 6 — Prometheus + Grafana Monitoring
+- Prometheus scraping metrics from all 7 services
+- Grafana dashboards: service health, K8s cluster, business metrics
+- Alerting rules: pod down, high CPU, high error rate
+- Installed via Helm on the EKS cluster
+
+```bash
+helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring
+```
+
+---
+
+## 🌟 Application Features
+
+FairGig empowers millions of Pakistani gig workers (Foodpanda riders, Careem drivers, Daraz delivery agents) with:
+
+- **Kamaai Logger** — Log shifts across multiple platforms, bulk CSV import
+- **Certified Income Statements** — Verifiable PKR income certificates for banks and landlords
+- **Shikayat Board** — Community grievance board for reporting deactivations and commission hikes
+- **Advocate Analytics** — Dashboard for labour advocates to spot city-wide income patterns
+- **Anomaly Detection** — Statistical Z-score analysis to flag suspicious platform deductions
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16, React 19, Tailwind CSS, TypeScript |
+| Backend | Python FastAPI, Node.js Express |
+| Database | Supabase (PostgreSQL) with Row Level Security |
+| Containerization | Docker, docker-compose |
+| Orchestration | Kubernetes (AWS EKS), Helm |
+| CI/CD | GitHub Actions |
+| Infrastructure | Terraform, AWS (EKS, ECR, VPC, ALB, IAM) |
+| Configuration | Ansible |
+| Monitoring | Prometheus, Grafana, Alertmanager |
+
+---
+
+## 🗂️ Project Structure
+
+```
+FairGig/
+├── app/                          # Next.js pages
+├── components/                   # React components
+├── backend/
+│   └── services/
+│       ├── auth_service/         # FastAPI — JWT auth (port 8001)
+│       ├── earnings_service/     # FastAPI — shift logging (port 8002)
+│       ├── anomaly_service/      # FastAPI — anomaly detection (port 8003)
+│       ├── grievance_service/    # Express — grievance board (port 8004)
+│       ├── analytics_service/    # FastAPI — KPI analytics (port 8005)
+│       └── certificate_renderer/ # Express — income certs (port 8006)
+├── docker/                       # Dockerfiles for all services
+├── .github/workflows/            # CI/CD pipelines
+├── terraform/                    # AWS infrastructure as code
+├── k8s/                          # Kubernetes manifests
+├── helm/                         # Helm charts
+├── ansible/                      # Ansible playbooks
+├── monitoring/                   # Prometheus & Grafana config
+└── milestones/                   # DevOps milestone documentation
+```
+
+---
+
+## 🚦 Running Locally
+
+### Option A — Docker (Recommended)
+```bash
+# Clone repo
+git clone https://github.com/kashan-miankhel14/fairgig-devops.git
+cd fairgig-devops
+
+# Copy env file
+cp .env.example .env
+# Fill in your Supabase credentials in .env
+
+# Start everything
+docker-compose up
+```
+
+### Option B — Manual
+```bash
+# Frontend
+npm install --legacy-peer-deps
+npm run dev
+
+# Backend (activate venv first)
+cd backend
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+
+# Each service in separate terminal
+uvicorn services.auth_service.main:app --port 8001
+uvicorn services.earnings_service.main:app --port 8002
+uvicorn services.anomaly_service.main:app --port 8003
+uvicorn services.analytics_service.main:app --port 8005
+node backend/services/grievance_service/server.js
+node backend/services/certificate_renderer/index.js
+```
+
+### Demo Accounts (password: `password123`)
 | Role | Email |
 |------|-------|
 | Worker | worker@fairgig.com |
@@ -96,20 +206,13 @@ node scripts/run_all.js
 
 ---
 
-### 🇵🇰 Pakistani Localization
-
-- All currency in **PKR**.
-- Pre-loaded with major Pakistani platforms: **Foodpanda, Careem, Daraz, Bykea**.
-- Seeded with Pakistani personas and data across cities like **Karachi, Lahore, Islamabad**.
-- UI labels in a mix of English and Roman Urdu for better accessibility.
-
----
-
-### 👥 Submission Details
-
-**Mandatory Contributors**:
-- mm037925@gmail.com
-- moeezsalman246@gmail.com
+## 🇵🇰 Pakistani Localization
+- All currency in **PKR**
+- Platforms: **Foodpanda, Careem, Daraz, Bykea**
+- Cities: **Karachi, Lahore, Islamabad, Rawalpindi, Peshawar**
+- UI in English + Roman Urdu for accessibility
 
 ---
-*Developed for SOFTEC 2026 by Team FairGig.*
+
+## 📄 License
+MIT
