@@ -1,218 +1,268 @@
-# FairGig 🇵🇰 — Gig Worker Income & Rights Platform
+# FairGig — Gig Worker Advocacy Platform
 
-> A production-grade microservices platform with a full DevOps pipeline — containerized with Docker, orchestrated on AWS EKS with Kubernetes, automated CI/CD via GitHub Actions, infrastructure provisioned with Terraform, server configuration managed by Ansible, and full observability with Prometheus & Grafana.
+> A full-stack microservices platform for gig worker rights in Pakistan, with a complete production-grade DevOps pipeline deployed on AWS.
+
+[![CI](https://github.com/kashan-miankhel14/fairgig-devops/actions/workflows/ci.yml/badge.svg)](https://github.com/kashan-miankhel14/fairgig-devops/actions/workflows/ci.yml)
+[![Deploy](https://github.com/kashan-miankhel14/fairgig-devops/actions/workflows/deploy.yml/badge.svg)](https://github.com/kashan-miankhel14/fairgig-devops/actions/workflows/deploy.yml)
 
 ---
 
-## 🏗️ Architecture Overview
+## What Is FairGig?
+
+FairGig helps gig workers (Foodpanda, Careem, Daraz riders) in Pakistan track their earnings, file grievances, detect wage anomalies, and generate verified income certificates for banks and landlords.
+
+---
+
+## Tech Stack
+
+### Application
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16, TypeScript, Tailwind CSS, Shadcn/UI |
+| Auth Service | Python, FastAPI, JWT, bcrypt |
+| Earnings Service | Python, FastAPI, PostgreSQL |
+| Anomaly Detection | Python, FastAPI, Statistical Analysis (Z-score) |
+| Analytics Service | Python, FastAPI, Aggregate KPIs |
+| Grievance Service | Node.js, Express.js |
+| Certificate Renderer | Node.js, Express.js, HTML/PDF generation |
+| Database | Supabase (PostgreSQL) |
+
+### DevOps Pipeline
+| Tool | Purpose |
+|------|---------|
+| Docker | Containerization of all 7 services |
+| Docker Compose | Local development orchestration |
+| GitHub Actions | CI/CD — build, test, deploy on every push |
+| Terraform | Infrastructure as Code — AWS provisioning |
+| AWS EKS | Managed Kubernetes cluster |
+| AWS ECR | Container registry |
+| AWS VPC | Networking — subnets, security groups |
+| Kubernetes | Container orchestration, auto-scaling |
+| Helm | Kubernetes package management |
+| Ansible | Server configuration automation |
+| Prometheus | Metrics collection |
+| Grafana | Monitoring dashboards and alerts |
+
+---
+
+## Architecture
 
 ```
 Internet
     │
     ▼
-[AWS ALB Load Balancer]
+[AWS ALB — Application Load Balancer]
     │
     ▼
 [AWS EKS — Kubernetes Cluster]
-    ├── Next.js Frontend          :3000
-    ├── Auth Service              :8001  (Python/FastAPI)
-    ├── Earnings Service          :8002  (Python/FastAPI)
-    ├── Anomaly Service           :8003  (Python/FastAPI)
-    ├── Grievance Service         :8004  (Node.js/Express)
-    ├── Analytics Service         :8005  (Python/FastAPI)
-    └── Certificate Renderer      :8006  (Node.js/Express)
+    ├── frontend          (Next.js)          :3000
+    ├── auth-service      (FastAPI)          :8001
+    ├── earnings-service  (FastAPI)          :8002
+    ├── anomaly-service   (FastAPI)          :8003
+    ├── grievance-service (Express.js)       :8004
+    ├── analytics-service (FastAPI)          :8005
+    └── certificate-svc   (Express.js)       :8006
     │
     ▼
 [Supabase PostgreSQL — Managed Database]
-    │
-    ▼
-[Prometheus + Grafana — Monitoring & Alerting]
 ```
 
 ---
 
-## 🚀 DevOps Pipeline
-
-### ✅ Milestone 1 — Docker Containerization
-- Dockerfiles for all 7 services (Python/FastAPI + Node.js/Express + Next.js multi-stage)
-- `docker-compose.yml` for full local development stack
-- Shared Docker network for inter-service communication
-- Health checks on all containers
-- `.dockerignore` to keep images lean and secrets out
-
-```bash
-# Run entire stack locally
-docker-compose up
-```
-
-### ✅ Milestone 2 — GitHub Actions CI/CD
-- **CI pipeline** (`ci.yml`): Triggers on every push and PR — builds all Docker images, runs TypeScript checks
-- **Deploy pipeline** (`deploy.yml`): Triggers on push to `main` — builds images, pushes to AWS ECR, deploys to EKS with zero-downtime rolling updates
-- Docker layer caching for fast builds
-- Image tagging with commit SHA for full traceability and rollback capability
+## DevOps Pipeline
 
 ```
 git push to main
-    → Build 7 Docker images
-    → Push to AWS ECR
-    → kubectl rolling update on EKS
-    → Wait for all pods healthy
-    → ✅ Live
-```
-
-### 🔄 Milestone 3 — Terraform (AWS Infrastructure as Code)
-- VPC with public/private subnets across 2 availability zones
-- EKS cluster with auto-scaling node groups (t3.medium)
-- ECR repositories for all 7 services
-- IAM roles and security groups
-- One command to provision entire AWS infrastructure
-
-```bash
-terraform init
-terraform plan
-terraform apply   # Provisions full AWS stack
-```
-
-### 🔄 Milestone 4 — Kubernetes Manifests + Helm Charts
-- K8s Deployments, Services, Ingress for all 7 services
-- Secrets management for DB credentials and API keys
-- Horizontal Pod Autoscaler (HPA) — scales pods based on CPU/memory
-- Helm charts for environment-specific deployments (dev/prod)
-
-```bash
-helm install fairgig ./helm/fairgig -f values-prod.yaml
-kubectl get pods -n fairgig
-```
-
-### 🔄 Milestone 5 — Ansible Automation
-- Playbooks for EC2 bastion host configuration
-- Automated tool installation (kubectl, helm, aws-cli)
-- Deployment automation playbooks
-- Secret rotation playbooks
-
-```bash
-ansible-playbook -i inventory/hosts.ini playbooks/setup-bastion.yml
-ansible-playbook -i inventory/hosts.ini playbooks/deploy-app.yml
-```
-
-### 🔄 Milestone 6 — Prometheus + Grafana Monitoring
-- Prometheus scraping metrics from all 7 services
-- Grafana dashboards: service health, K8s cluster, business metrics
-- Alerting rules: pod down, high CPU, high error rate
-- Installed via Helm on the EKS cluster
-
-```bash
-helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring
+      │
+      ▼
+GitHub Actions CI
+      ├── Build all 7 Docker images
+      ├── TypeScript type check
+      └── Push images to AWS ECR
+      │
+      ▼
+Deploy to AWS EKS
+      ├── kubectl rolling update (zero downtime)
+      ├── Health check all pods
+      └── Verify deployment
+      │
+      ▼
+Monitoring (Prometheus + Grafana)
+      ├── Service health dashboards
+      ├── Resource usage per pod
+      └── Alerts on failures
 ```
 
 ---
 
-## 🌟 Application Features
-
-FairGig empowers millions of Pakistani gig workers (Foodpanda riders, Careem drivers, Daraz delivery agents) with:
-
-- **Kamaai Logger** — Log shifts across multiple platforms, bulk CSV import
-- **Certified Income Statements** — Verifiable PKR income certificates for banks and landlords
-- **Shikayat Board** — Community grievance board for reporting deactivations and commission hikes
-- **Advocate Analytics** — Dashboard for labour advocates to spot city-wide income patterns
-- **Anomaly Detection** — Statistical Z-score analysis to flag suspicious platform deductions
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 16, React 19, Tailwind CSS, TypeScript |
-| Backend | Python FastAPI, Node.js Express |
-| Database | Supabase (PostgreSQL) with Row Level Security |
-| Containerization | Docker, docker-compose |
-| Orchestration | Kubernetes (AWS EKS), Helm |
-| CI/CD | GitHub Actions |
-| Infrastructure | Terraform, AWS (EKS, ECR, VPC, ALB, IAM) |
-| Configuration | Ansible |
-| Monitoring | Prometheus, Grafana, Alertmanager |
-
----
-
-## 🗂️ Project Structure
+## Project Structure
 
 ```
-FairGig/
+fairgig-devops/
 ├── app/                          # Next.js pages
-├── components/                   # React components
+│   ├── dashboard/
+│   ├── shift-logs/
+│   ├── grievance/
+│   ├── verifications/
+│   ├── advocate/
+│   └── profile/
 ├── backend/
 │   └── services/
-│       ├── auth_service/         # FastAPI — JWT auth (port 8001)
-│       ├── earnings_service/     # FastAPI — shift logging (port 8002)
-│       ├── anomaly_service/      # FastAPI — anomaly detection (port 8003)
-│       ├── grievance_service/    # Express — grievance board (port 8004)
-│       ├── analytics_service/    # FastAPI — KPI analytics (port 8005)
-│       └── certificate_renderer/ # Express — income certs (port 8006)
+│       ├── auth_service/         # FastAPI — JWT auth
+│       ├── earnings_service/     # FastAPI — shift logging
+│       ├── anomaly_service/      # FastAPI — anomaly detection
+│       ├── analytics_service/    # FastAPI — KPI analytics
+│       ├── grievance_service/    # Express.js — grievances
+│       └── certificate_renderer/ # Express.js — income certs
 ├── docker/                       # Dockerfiles for all services
-├── .github/workflows/            # CI/CD pipelines
+├── .github/workflows/            # GitHub Actions CI/CD
 ├── terraform/                    # AWS infrastructure as code
 ├── k8s/                          # Kubernetes manifests
 ├── helm/                         # Helm charts
 ├── ansible/                      # Ansible playbooks
-├── monitoring/                   # Prometheus & Grafana config
-└── milestones/                   # DevOps milestone documentation
+├── monitoring/                   # Prometheus + Grafana config
+├── milestones/                   # DevOps milestone documentation
+└── docker-compose.yml            # Local development
 ```
 
 ---
 
-## 🚦 Running Locally
+## Running Locally
 
-### Option A — Docker (Recommended)
+### Prerequisites
+- Docker & Docker Compose
+- Node.js 20+
+- Python 3.11+
+
+### Quick Start
+
 ```bash
-# Clone repo
+# Clone the repo
 git clone https://github.com/kashan-miankhel14/fairgig-devops.git
 cd fairgig-devops
 
-# Copy env file
+# Copy env file and fill in your Supabase credentials
 cp .env.example .env
-# Fill in your Supabase credentials in .env
 
-# Start everything
+# Start all services with Docker Compose
 docker-compose up
-```
 
-### Option B — Manual
-```bash
-# Frontend
+# Or run without Docker
 npm install --legacy-peer-deps
-npm run dev
-
-# Backend (activate venv first)
-cd backend
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-
-# Each service in separate terminal
-uvicorn services.auth_service.main:app --port 8001
-uvicorn services.earnings_service.main:app --port 8002
-uvicorn services.anomaly_service.main:app --port 8003
-uvicorn services.analytics_service.main:app --port 8005
-node backend/services/grievance_service/server.js
-node backend/services/certificate_renderer/index.js
+npm run dev:all
 ```
 
-### Demo Accounts (password: `password123`)
-| Role | Email |
-|------|-------|
-| Worker | worker@fairgig.com |
-| Verifier | verifier@fairgig.com |
-| Advocate | advocate@fairgig.com |
+Services will be available at:
+- Frontend: http://localhost:3000
+- Auth: http://localhost:8001/health
+- Earnings: http://localhost:8002/health
+- Anomaly: http://localhost:8003/health
+- Grievance: http://localhost:8004/health
+- Analytics: http://localhost:8005/health
+- Certificate: http://localhost:8006/health
 
 ---
 
-## 🇵🇰 Pakistani Localization
-- All currency in **PKR**
-- Platforms: **Foodpanda, Careem, Daraz, Bykea**
-- Cities: **Karachi, Lahore, Islamabad, Rawalpindi, Peshawar**
-- UI in English + Roman Urdu for accessibility
+## DevOps Milestones
+
+| # | Milestone | Status |
+|---|-----------|--------|
+| 1 | Docker containerization of all 7 services | ✅ Complete |
+| 2 | GitHub Actions CI/CD pipeline | ✅ Complete |
+| 3 | Terraform — AWS VPC, EKS, ECR provisioning | 🔄 In Progress |
+| 4 | Kubernetes manifests + Helm charts | 🔄 In Progress |
+| 5 | Ansible server configuration playbooks | 🔄 In Progress |
+| 6 | Prometheus + Grafana monitoring stack | 🔄 In Progress |
 
 ---
 
-## 📄 License
-MIT
+## CI/CD Pipeline Details
+
+### On every Pull Request / push to develop:
+- Builds Docker images for all 6 backend services
+- Runs TypeScript type checking
+
+### On push to main:
+- Builds and pushes all 7 images to AWS ECR
+- Tags images with commit SHA for traceability
+- Deploys to AWS EKS via `kubectl set image`
+- Waits for rolling update to complete
+- Verifies all pods are healthy
+
+---
+
+## Infrastructure (Terraform)
+
+Provisions on AWS:
+- **VPC** with public/private subnets across 2 availability zones
+- **EKS Cluster** — managed Kubernetes (t3.medium nodes, auto-scaling 2-4)
+- **ECR** — 7 container registries (one per service)
+- **IAM Roles** — EKS cluster role, node group role, CI/CD deployment role
+- **Security Groups** — least-privilege network access
+
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply   # Provisions entire AWS infrastructure
+```
+
+---
+
+## Kubernetes Deployment
+
+```bash
+# Deploy to EKS
+helm install fairgig ./helm/fairgig -f helm/fairgig/values-prod.yaml
+
+# Check pods
+kubectl get pods -n fairgig
+
+# View logs
+kubectl logs -f deployment/auth-service -n fairgig
+```
+
+---
+
+## Monitoring
+
+Prometheus scrapes metrics from all services every 15 seconds.
+Grafana dashboards show:
+- Service uptime and response times
+- Pod CPU and memory usage
+- Error rates per service
+- Business metrics (grievances filed, shifts logged, anomalies detected)
+
+```bash
+# Access Grafana
+kubectl port-forward svc/grafana 3001:80 -n monitoring
+# Open http://localhost:3001
+```
+
+---
+
+## Environment Variables
+
+Copy `.env.example` and fill in your values:
+
+```bash
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_KEY=your-service-role-key
+POSTGRES_URL=postgresql://postgres:password@host:5432/postgres
+SUPABASE_JWT_SECRET=your-jwt-secret
+
+# Frontend
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+---
+
+## Author
+
+**Kashan Saeed**
+- GitHub: [@kashan-miankhel14](https://github.com/kashan-miankhel14)
+- LinkedIn: [kashan-saeed-942548375](https://linkedin.com/in/kashan-saeed-942548375)
+- Email: kashanmiankhel922@gmail.com
